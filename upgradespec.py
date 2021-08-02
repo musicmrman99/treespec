@@ -118,7 +118,8 @@ def get_next_node(rest, spec_str):
 
 def get_next_branch(rest, spec_str):
     # Split off this part (ie. list of sub-trees)
-    part = utils.get_between(rest, "(", ")")
+    # Note: Match brackets, as divergent branches are nestable
+    part = utils.get_between(rest, "(", ")", True)
     if not rest.startswith("("+part+")"):
         raise ValueError(f"value of next node (the first part of '{rest}') is not a list, in: {spec_str}")
     rest = rest[len(part)+2:]
@@ -126,8 +127,8 @@ def get_next_branch(rest, spec_str):
 
     # Split the node name and the relation spec (if any)
     rel_spec = utils.get_between(rel_spec_maybe, "{", "}")
-    if rel_spec == "" and (part.find("{") > 0 or part.find("}") > 0):
-        raise ValueError(f"incomplete relation spec in '{part}', in: {spec_str}")
+    if rel_spec == "" and (rel_spec_maybe.find("{") > 0 or rel_spec_maybe.find("}") > 0):
+        raise ValueError(f"incomplete relation spec in '{rel_spec_maybe}', in: {spec_str}")
 
     # Handle divergent substructure (multiple sub-nodes/sub-trees)
     subtrees_str = part.split(",")
