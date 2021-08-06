@@ -4,8 +4,6 @@ import itertools
 
 import utils
 
-# Circular dependency (tightly coupled) between Node <-> Relation
-
 class Relation:
     def __init__(self, num=1, combo="I"):
         self.num = int(num)
