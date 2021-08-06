@@ -68,18 +68,26 @@ def test_complex_consistent():
     assert parse_spec("L0 {3IC}-> L1 -> L2 {2XC}-> L3 -> L4") == root
 
 def test_complex_divergent():
+    b1 = Node("L2")
+    b1.to(Relation()).node(Node("L3"))
+
+    b2_1 = Node("L3")
+    b2_1.to(Relation()).node(Node("L4"))
+
+    b2_2 = Node("L3")
+    (b2_2.to(Relation()).node(Node("L4"))
+        .to(Relation(2,"X")).node(Node("L5"))
+        .to(Relation()).node(Node("L6"))
+    )
+
+    b2 = Node("L2")
+    b2.to(Relation(2)).branch(b2_1, b2_2)
+
     root = Node("L0")
     (root.to(Relation()).node(Node("L1"))
-        .to(Relation(2)).branch(
-            Node("L2").to(Relation()).node(Node("L3")),
-            Node("L2").to(Relation(2)).branch(
-                Node("L3")
-                    .to(Relation()).node(Node("L4")),
-                Node("L3")
-                    .to(Relation()).node(Node("L4"))
-                    .to(Relation(2,"X")).node(Node("L5"))
-                    .to(Relation()).node(Node("L6"))
-            )
-        )
+        .to(Relation(2)).branch(b1, b2)
     )
-    assert parse_spec("L0 -> L1 {2ID}-> (L2 -> L3, L2 {2ID}-> (L3 -> L4, L3 -> L4 {2XC}-> L5 -> L6))") == root
+
+    parse = parse_spec("L0 -> L1 {2ID}-> (L2 -> L3, L2 {2ID}-> (L3 -> L4, L3 -> L4 {2XC}-> L5 -> L6))")
+    
+    assert parse == root
