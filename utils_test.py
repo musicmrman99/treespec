@@ -109,51 +109,30 @@ def test_get_between_matching_diff_delim_match_plus_open_between():
 def test_get_between_matching_diff_delim_match_plus_close_between():
     assert utils.get_between("he(llo )wor)ld", "(", ")", True) == "llo "
 
-# # Test get_between()
+# Test is_iterable()
+# Source: https://stackoverflow.com/a/44328500
 
-# def test_get_between_all_empty():
-#     assert utils.get_between("", "", "") == ""
+def test_is_iterable_tuple():
+    assert utils.is_iterable(("f", "f"))
 
-# def test_get_between_empty_start_and_end():
-#     assert utils.get_between("hello world", "", "") == "hello world"
+def test_is_iterable_list():
+    assert utils.is_iterable(["f", "f"])
 
-# def test_get_between_empty_start_or_end():
-#     assert utils.get_between("hello world", "|", "") == ""
-#     assert utils.get_between("hello world", "", "|") == ""
+def test_is_iterable_iterator():
+    assert utils.is_iterable(iter("ff"))
 
-# def test_get_between_same_delim_no_occurences():
-#     assert utils.get_between("hello world", "|", "|") == ""
+def test_is_iterable_generator():
+    assert utils.is_iterable(range(44))
 
-# def test_get_between_same_delim_one_occurence():
-#     assert utils.get_between("he|llo world", "|", "|") == ""
+def test_is_iterable_bytes():
+    assert utils.is_iterable(b"ff")
 
-# def test_get_between_same_delim_two_occurences():
-#     assert utils.get_between("he|ll|o world", "|", "|") == "ll"
+def test_is_iterable_f_string():
+    assert not utils.is_iterable("ff")
 
-# def test_get_between_same_delim_three_occurences():
-#     assert utils.get_between("he|ll|o w|orld", "|", "|") == "ll"
+def test_is_iterable_f_integer():
+    assert not utils.is_iterable(44)
 
-# def test_get_between_diff_delim_no_either():
-#     assert utils.get_between("hello world", "(", ")") == ""
-
-# def test_get_between_diff_delim_no_open():
-#     assert utils.get_between("hello wor)ld", "(", ")") == ""
-
-# def test_get_between_diff_delim_no_close():
-#     assert utils.get_between("he(llo world", "(", ")") == ""
-
-# def test_get_between_diff_delim_match():
-#     assert utils.get_between("he(llo wor)ld", "(", ")") == "llo wor"
-
-# def test_get_between_diff_delim_match_plus_close_before():
-#     assert utils.get_between("h)e(llo wor)ld", "(", ")") == "llo wor"
-
-# def test_get_between_diff_delim_match_plus_open_after():
-#     assert utils.get_between("he(llo wor)l(d", "(", ")") == "llo wor"
-
-# def test_get_between_diff_delim_match_plus_open_between():
-#     assert utils.get_between("he(llo( wor)ld", "(", ")") == "llo( wor"
-
-# # Should be consistent with test_get_between_same_delim_three_occurences
-# def test_get_between_diff_delim_match_plus_close_between():
-#     assert utils.get_between("he(llo )wor)ld", "(", ")") == "llo "
+def test_is_iterable_f_function():
+    assert not utils.is_iterable(
+        utils.is_iterable)
