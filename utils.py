@@ -1,4 +1,4 @@
-import collections.abc
+from typing import Iterable
 
 def pad_list(ls, count, item):
     ret = list(ls)
@@ -61,6 +61,6 @@ def get_between(string: str, start_str: str, end_str: str, matching: bool = Fals
 # Based on: https://stackoverflow.com/a/44328500, plus Charlie's comment
 def is_iterable(obj):
     return (
-        isinstance(obj, collections.abc.Iterable) 
+        isinstance(obj, Iterable) 
         and not isinstance(obj, str)
     )
