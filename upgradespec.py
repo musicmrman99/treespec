@@ -131,7 +131,7 @@ def get_next_branch(rest, spec_str):
         raise ValueError(f"incomplete relation spec in '{rel_spec_maybe}', in: {spec_str}")
 
     # Handle divergent substructure (multiple sub-nodes/sub-trees)
-    subtrees_str = part.split(",")
+    subtrees_str = utils.split_top_level(part, ",", [("(", ")")])
     nodes = map(lambda subtree_str: parse_spec(subtree_str), subtrees_str)
 
     # Return needed values

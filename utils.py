@@ -58,6 +58,27 @@ def get_between(string: str, start_str: str, end_str: str, matching: bool = Fals
 
     return string[start:end]
 
+def split_top_level(string: str, delim: str, subexpr_list: list):
+    ls = []
+    
+    rest = string
+    batch = ""
+    print("\nsplit_top_level('",string,"', '",delim,"', ",subexpr_list,")\n----------\n", sep="")
+    while True:
+        next_delim = rest.find(delim)
+        
+        if next_delim < 0:
+            ls.append(rest)
+            break
+
+        batch += rest[:next_delim]
+        rest = rest[next_delim+1:]
+
+        ls.append(batch)
+        batch = ""
+
+    return ls
+
 # Based on: https://stackoverflow.com/a/44328500, plus Charlie's comment
 def is_iterable(obj):
     return (
