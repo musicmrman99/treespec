@@ -5,7 +5,7 @@ import itertools
 import utils
 
 class Relation:
-    def __init__(self, num=1, combo="I"):
+    def __init__(self, num=1, combo="X"):
         self.num = int(num)
         if combo == "I":
             self.inclusive = True
@@ -42,7 +42,7 @@ class Relation:
 
         if (
             self.num != 1
-            or self.inclusive != True
+            or self.inclusive != False
             or utils.is_iterable(self.next)
         ):
             rel_spec_str = "{"+str(self.num)
@@ -111,7 +111,7 @@ class Builder:
         self.cur = builders
         return self
 
-    def to(self, num=1, combo="I"):
+    def to(self, num=1, combo="X"):
         relation = Relation(num, combo)
         for end in self.get_ends():
             end.relate(relation)
