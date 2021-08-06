@@ -20,14 +20,17 @@ def test_get_between_empty_start_and_end():
     assert utils.get_between("hello world", "", "") == "hello world"
 
 def test_get_between_empty_start_or_end():
-    assert utils.get_between("hello world", "|", "") == ""
-    assert utils.get_between("hello world", "", "|") == ""
+    assert utils.get_between("hello world", "|", "") == None
+    assert utils.get_between("hello world", "", "|") == None
 
 def test_get_between_same_delim_no_occurences():
-    assert utils.get_between("hello world", "|", "|") == ""
+    assert utils.get_between("hello world", "|", "|") == None
 
 def test_get_between_same_delim_one_occurence():
-    assert utils.get_between("he|llo world", "|", "|") == ""
+    assert utils.get_between("he|llo world", "|", "|") == None
+
+def test_get_between_same_delim_two_occurences_empty():
+    assert utils.get_between("he||llo world", "|", "|") == ""
 
 def test_get_between_same_delim_two_occurences():
     assert utils.get_between("he|ll|o world", "|", "|") == "ll"
@@ -36,13 +39,13 @@ def test_get_between_same_delim_three_occurences():
     assert utils.get_between("he|ll|o w|orld", "|", "|") == "ll"
 
 def test_get_between_diff_delim_no_either():
-    assert utils.get_between("hello world", "(", ")") == ""
+    assert utils.get_between("hello world", "(", ")") == None
 
 def test_get_between_diff_delim_no_open():
-    assert utils.get_between("hello wor)ld", "(", ")") == ""
+    assert utils.get_between("hello wor)ld", "(", ")") == None
 
 def test_get_between_diff_delim_no_close():
-    assert utils.get_between("he(llo world", "(", ")") == ""
+    assert utils.get_between("he(llo world", "(", ")") == None
 
 def test_get_between_diff_delim_match():
     assert utils.get_between("he(llo wor)ld", "(", ")") == "llo wor"
@@ -69,14 +72,17 @@ def test_get_between_matching_empty_start_and_end():
     assert utils.get_between("hello world", "", "", True) == "hello world"
 
 def test_get_between_matching_empty_start_or_end():
-    assert utils.get_between("hello world", "|", "", True) == ""
-    assert utils.get_between("hello world", "", "|", True) == ""
+    assert utils.get_between("hello world", "|", "", True) == None
+    assert utils.get_between("hello world", "", "|", True) == None
 
 def test_get_between_matching_same_delim_no_occurences():
-    assert utils.get_between("hello world", "|", "|", True) == ""
+    assert utils.get_between("hello world", "|", "|", True) == None
 
 def test_get_between_matching_same_delim_one_occurence():
-    assert utils.get_between("he|llo world", "|", "|", True) == ""
+    assert utils.get_between("he|llo world", "|", "|", True) == None
+
+def test_get_between_matching_same_delim_two_occurences_empty():
+    assert utils.get_between("he||llo world", "|", "|", True) == ""
 
 def test_get_between_matching_same_delim_two_occurences():
     assert utils.get_between("he|ll|o world", "|", "|", True) == "ll"
@@ -85,13 +91,13 @@ def test_get_between_matching_same_delim_three_occurences():
     assert utils.get_between("he|ll|o w|orld", "|", "|", True) == "ll"
 
 def test_get_between_matching_diff_delim_no_either():
-    assert utils.get_between("hello world", "(", ")", True) == ""
+    assert utils.get_between("hello world", "(", ")", True) == None
 
 def test_get_between_matching_diff_delim_no_open():
-    assert utils.get_between("hello wor)ld", "(", ")", True) == ""
+    assert utils.get_between("hello wor)ld", "(", ")", True) == None
 
 def test_get_between_matching_diff_delim_no_close():
-    assert utils.get_between("he(llo world", "(", ")", True) == ""
+    assert utils.get_between("he(llo world", "(", ")", True) == None
 
 def test_get_between_matching_diff_delim_match():
     assert utils.get_between("he(llo wor)ld", "(", ")", True) == "llo wor"
@@ -103,7 +109,7 @@ def test_get_between_matching_diff_delim_match_plus_open_after():
     assert utils.get_between("he(llo wor)l(d", "(", ")", True) == "llo wor"
 
 def test_get_between_matching_diff_delim_match_plus_open_between():
-    assert utils.get_between("he(llo( wor)ld", "(", ")", True) == ""
+    assert utils.get_between("he(llo( wor)ld", "(", ")", True) == None
 
 # Should be consistent with test_get_between_matching_same_delim_three_occurences
 def test_get_between_matching_diff_delim_match_plus_close_between():
