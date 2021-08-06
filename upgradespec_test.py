@@ -77,3 +77,9 @@ def test_complex_divergent():
             )
         )
         .get_root())
+
+def test_branch_consistent_continuation():
+    assert parse_spec("a {2XD}-> (b, c) -> d") == (Builder("a")
+        .to(2).branch(Builder("b"), Builder("c"))
+        .to().node("d")
+        .get_root())

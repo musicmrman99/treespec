@@ -129,7 +129,7 @@ class Builder:
             ends = [self.cur]
         return ends
 
-def get_next_node(rest, spec_str):
+def _get_next_node(rest, spec_str):
     # Split off this part
     (part, rest) = utils.pad_list(rest.split("->", 1), 2, None)
 
@@ -145,9 +145,9 @@ def get_next_node(rest, spec_str):
         raise ValueError(f"node names cannot be blank, in: {spec_str}")
 
     # Return needed values
-    return (Node(name), rel_spec, rest)
+    return (name, rel_spec, rest)
 
-def get_next_branch(rest, spec_str):
+def _get_next_branch(rest, spec_str):
     # Split off this part (ie. list of sub-trees)
     # Note: Match brackets, as divergent branches are nestable
     part = utils.get_between(rest, "(", ")", True)
@@ -161,15 +161,17 @@ def get_next_branch(rest, spec_str):
     if rel_spec is None and (rel_spec_maybe.find("{") > 0 or rel_spec_maybe.find("}") > 0):
         raise ValueError(f"incomplete relation spec in '{rel_spec_maybe}', in: {spec_str}")
 
-    # Handle divergent substructure (multiple sub-nodes/sub-trees)
+    # Handle divergent substructure (multiple sub-trees)
     subtrees_str = utils.split_top_level(part, ",", [("(", ")")])
-    nodes = list(map(lambda subtree_str: parse_spec(subtree_str), subtrees_str))
+    builders = list(map(lambda subtree_str: _parse_spec(subtree_str), subtrees_str))
 
     # Return needed values
-    return (nodes, rel_spec, rest)
+    return (builders, rel_spec, rest)
 
-def parse_spec(spec_str: str) -> Node:
-    """Parse the given spec string into a spec tree."""
+def _parse_spec(spec_str: str) -> Builder:
+    """
+    Parse the given string of USL into a spec tree, returning the root builder.
+    """
 
     # Remove ALL spaces
     rest = spec_str.replace(" ", "")
@@ -178,13 +180,13 @@ def parse_spec(spec_str: str) -> Node:
     if rest == "":
         return None
 
-    # Split off first node and initialise the current object (node or relation)
-    (root, rel_spec, rest) = get_next_node(rest, spec_str)
-    cur = root
+    # Split off first node and make the root builder
+    (root_name, rel_spec, rest) = _get_next_node(rest, spec_str)
+    builder = Builder(root_name)
 
     # Make the rest of the nodes
     while rest is not None:
-        # Create relation (handling relation spec)
+        # Relate last spec "to" next spec (handling relation spec if needed)
         if rel_spec is not None:
             if rest == "":
                 raise ValueError(
@@ -194,23 +196,30 @@ def parse_spec(spec_str: str) -> Node:
 
             # FIXME: num may be more than one character!!!
             (num, combo, struct) = rel_spec # from last iteration
-            rel = Relation(num, combo)
+            builder.to(num, combo)
         else:
-            rel = Relation()
-
-        cur.relate(rel)
-        cur = rel
+            builder.to()
 
         if rel_spec is None or struct == "C":
             # Split off next node, and keep going
-            (node, rel_spec, rest) = get_next_node(rest, spec_str)
-            cur.to_node(node)
-            cur = node
+            (node_name, rel_spec, rest) = _get_next_node(rest, spec_str)
+            builder.node(node_name)
 
         elif struct == "D":
-            (nodes, rel_spec, rest) = get_next_branch(rest, spec_str)
-            cur.to_nodes(nodes)
-            cur = nodes
+            (branch_builders, rel_spec, rest) = _get_next_branch(rest, spec_str)
+            builder.branch(*branch_builders)
+
+    # Return the *builder*
+    return builder
+
+def parse_spec(spec_str: str) -> Node:
+    """Parse the given spec string into a spec tree."""
+
+    builder = _parse_spec(spec_str)
+    if builder is None:
+        return builder
+    else:
+        return builder.get_root()
 
     # Return the root
     return root
