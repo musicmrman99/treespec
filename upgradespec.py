@@ -104,7 +104,7 @@ def get_next_node(rest, spec_str):
 
     # Split the node name and the relation spec (if any)
     rel_spec = utils.get_between(part, "{", "}")
-    if rel_spec != "":
+    if rel_spec is not None:
         name = part.split("{", 1)[0]
     else:
         name = part
@@ -120,14 +120,14 @@ def get_next_branch(rest, spec_str):
     # Split off this part (ie. list of sub-trees)
     # Note: Match brackets, as divergent branches are nestable
     part = utils.get_between(rest, "(", ")", True)
-    if not rest.startswith("("+part+")"):
+    if part is None or not rest.startswith("("+part+")"):
         raise ValueError(f"value of next node (the first part of '{rest}') is not a list, in: {spec_str}")
     rest = rest[len(part)+2:]
     (rel_spec_maybe, rest) = utils.pad_list(rest.split("->", 1), 2, None)
 
     # Split the node name and the relation spec (if any)
     rel_spec = utils.get_between(rel_spec_maybe, "{", "}")
-    if rel_spec == "" and (rel_spec_maybe.find("{") > 0 or rel_spec_maybe.find("}") > 0):
+    if rel_spec is None and (rel_spec_maybe.find("{") > 0 or rel_spec_maybe.find("}") > 0):
         raise ValueError(f"incomplete relation spec in '{rel_spec_maybe}', in: {spec_str}")
 
     # Handle divergent substructure (multiple sub-nodes/sub-trees)
@@ -154,7 +154,7 @@ def parse_spec(spec_str: str) -> Node:
     # Make the rest of the nodes
     while rest is not None:
         # Create relation (handling relation spec)
-        if rel_spec != "":
+        if rel_spec is not None:
             if rest == "":
                 raise ValueError(
                     f"cannot have relation spec '{rel_spec}'"
@@ -169,7 +169,7 @@ def parse_spec(spec_str: str) -> Node:
 
         cur = cur.to(rel)
 
-        if rel_spec == "" or struct == "C":
+        if rel_spec is None or struct == "C":
             # Split off next node, and keep going
             (node, rel_spec, rest) = get_next_node(rest, spec_str)
             cur = cur.node(node)
