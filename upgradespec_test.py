@@ -19,14 +19,10 @@ def test_f_one_side_of_arrow():
         parse_spec("->a")
 
 def test_two():
-    root = Node("a")
-    root.to(Relation()).node(Node("b"))
-    assert parse_spec("a->b") == root
+    assert parse_spec("a->b") == Builder("a").to().node("b").get_root()
 
 def test_two_equiv():
-    root = Node("a")
-    root.to(Relation()).node(Node("b"))
-    assert parse_spec("a{1IC}->b") == root
+    assert parse_spec("a{1IC}->b") == Builder("a").to().node("b").get_root()
 
 def test_f_invalid_rel_spec_format():
     with pytest.raises(ValueError):
@@ -40,54 +36,44 @@ def test_f_invalid_rel_spec_missing_brace():
         parse_spec("a{1IC->b{1IC}->c")
 
 def test_branch():
-    root = Node("a")
-    root.to(Relation(2)).node(Node("b"))
-    assert parse_spec("a{2IC}->b") == root
+    assert parse_spec("a{2IC}->b") == Builder("a").to(2).node("b").get_root()
 
 def test_branch_exclusive():
-    root = Node("a")
-    root.to(Relation(2,"X")).node(Node("b"))
-    assert parse_spec("a{2XC}->b") == root
+    assert parse_spec("a{2XC}->b") == Builder("a").to(2,"X").node("b").get_root()
 
 def test_branch_divergent():
-    root = Node("a")
-    root.to(Relation(2)).branch(Node("b"), Node("b"))
-    assert parse_spec("a{2ID}->(b,b)") == root
+    root = (Builder("a")
+        .to(2).branch(Builder("b"), Builder("b"))
+        .get_root())
+    parsed = parse_spec("a{2ID}->(b,b)")
+    print(root.str(True))
+    print(parsed.str(True))
+    assert parsed == root
 
 def test_branch_exclusive_divergent():
-    root = Node("a")
-    root.to(Relation(2,"X")).branch(Node("b"), Node("b"))
-    assert parse_spec("a{2XD}->(b,b)") == root
+    assert parse_spec("a{2XD}->(b,b)") == (Builder("a")
+        .to(2,"X").branch(Builder("b"), Builder("b"))
+        .get_root())
 
 def test_complex_consistent():
-    root = Node("L0")
-    (root.to(Relation(3)).node(Node("L1"))
-        .to(Relation()).node(Node("L2"))
-        .to(Relation(2,"X")).node(Node("L3"))
-        .to(Relation()).node(Node("L4")))
-    assert parse_spec("L0 {3IC}-> L1 -> L2 {2XC}-> L3 -> L4") == root
+    assert parse_spec("L0 {3IC}-> L1 -> L2 {2XC}-> L3 -> L4") == (Builder("L0")
+        .to(3).node("L1")
+        .to().node("L2")
+        .to(2,"X").node("L3")
+        .to().node("L4")
+        .get_root())
 
 def test_complex_divergent():
-    b1 = Node("L2")
-    b1.to(Relation()).node(Node("L3"))
-
-    b2_1 = Node("L3")
-    b2_1.to(Relation()).node(Node("L4"))
-
-    b2_2 = Node("L3")
-    (b2_2.to(Relation()).node(Node("L4"))
-        .to(Relation(2,"X")).node(Node("L5"))
-        .to(Relation()).node(Node("L6"))
-    )
-
-    b2 = Node("L2")
-    b2.to(Relation(2)).branch(b2_1, b2_2)
-
-    root = Node("L0")
-    (root.to(Relation()).node(Node("L1"))
-        .to(Relation(2)).branch(b1, b2)
-    )
-
     parse = parse_spec("L0 -> L1 {2ID}-> (L2 -> L3, L2 {2ID}-> (L3 -> L4, L3 -> L4 {2XC}-> L5 -> L6))")
-    
-    assert parse == root
+    assert parse == (Builder("L0")
+        .to().node("L1")
+        .to(2).branch(
+            Builder("L2").to().node("L3"),
+            Builder("L2").to(2).branch(
+                Builder("L3").to().node("L4"),
+                Builder("L3").to().node("L4")
+                    .to(2,"X").node("L5")
+                    .to().node("L6")
+            )
+        )
+        .get_root())

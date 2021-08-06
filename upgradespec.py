@@ -1,5 +1,6 @@
 import sys
 import graphviz as gv
+import itertools
 
 import utils
 
@@ -17,13 +18,11 @@ class Relation:
 
         self.next = None
 
-    def node(self, node):
+    def to_node(self, node):
         self.next = node
-        return self.next # so you can chain
 
-    def branch(self, *names):
-        self.next = names
-        # you can't branch-chain anyway
+    def to_nodes(self, nodes):
+        self.next = nodes
 
     def __eq__(self, other):
         return (
@@ -72,9 +71,8 @@ class Node:
         self.name = name
         self.relation = None
 
-    def to(self, relation):
+    def relate(self, relation):
         self.relation = relation
-        return self.relation # so you can chain
 
     def __eq__(self, other):
         return (
@@ -97,6 +95,41 @@ class Node:
             name = self.name
 
         return name + rel_str
+
+class Builder():
+    def __init__(self, name):
+        self.root = Node(name)
+        self.cur = self.root
+
+    def node(self, name):
+        next = Node(name)
+        self.cur.to_node(next)
+        self.cur = next
+        return self
+
+    def branch(self, *builders):
+        next = [builder.get_root() for builder in builders]
+        self.cur.to_nodes(next)
+        self.cur = builders
+        return self
+
+    def to(self, num=1, combo="I"):
+        relation = Relation(num, combo)
+        for end in self.get_ends():
+            end.relate(relation)
+        self.cur = relation
+        return self
+
+    def get_root(self):
+        return self.root
+
+    def get_ends(self):
+        if utils.is_iterable(self.cur):
+            ends = list(itertools.chain.from_iterable(
+                builder.get_ends() for builder in self.cur))
+        else:
+            ends = [self.cur]
+        return ends
 
 def get_next_node(rest, spec_str):
     # Split off this part
@@ -132,7 +165,7 @@ def get_next_branch(rest, spec_str):
 
     # Handle divergent substructure (multiple sub-nodes/sub-trees)
     subtrees_str = utils.split_top_level(part, ",", [("(", ")")])
-    nodes = map(lambda subtree_str: parse_spec(subtree_str), subtrees_str)
+    nodes = list(map(lambda subtree_str: parse_spec(subtree_str), subtrees_str))
 
     # Return needed values
     return (nodes, rel_spec, rest)
@@ -167,16 +200,19 @@ def parse_spec(spec_str: str) -> Node:
         else:
             rel = Relation()
 
-        cur = cur.to(rel)
+        cur.relate(rel)
+        cur = rel
 
         if rel_spec is None or struct == "C":
             # Split off next node, and keep going
             (node, rel_spec, rest) = get_next_node(rest, spec_str)
-            cur = cur.node(node)
+            cur.to_node(node)
+            cur = node
 
         elif struct == "D":
             (nodes, rel_spec, rest) = get_next_branch(rest, spec_str)
-            cur = cur.branch(*nodes)
+            cur.to_nodes(nodes)
+            cur = nodes
 
     # Return the root
     return root
