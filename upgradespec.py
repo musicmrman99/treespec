@@ -94,7 +94,7 @@ class Node:
 
         return name + rel_str
 
-class Builder():
+class Builder:
     def __init__(self, name):
         self.root = Node(name)
         self.cur = self.root
