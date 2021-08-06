@@ -158,7 +158,7 @@ def test_split_top_level_span_multiple_spec_nested_instances():
 
 def test_split_top_level_span_multiple_spec_partially_overlapping_instances():
     assert (utils.split_top_level("hello,(something,<world),again>,this", ",", [("(", ")"), ("<", ">")]) ==
-        ["hello","hello,(something,<world)","again>","this"])
+        ["hello","(something,<world)","again>","this"])
 
 def test_split_top_level_spaces():
     assert (
