@@ -109,6 +109,61 @@ def test_get_between_matching_diff_delim_match_plus_open_between():
 def test_get_between_matching_diff_delim_match_plus_close_between():
     assert utils.get_between("he(llo )wor)ld", "(", ")", True) == "llo "
 
+# Test split_top_level()
+
+def test_split_top_level_empty():
+    assert utils.split_top_level("", ",", []) == [""]
+
+def test_split_top_level_one():
+    assert utils.split_top_level("hello", ",", []) == ["hello"]
+
+def test_split_top_level_multiple_empty():
+    assert utils.split_top_level(",", ",", []) == ["", ""]
+
+def test_split_top_level_multiple():
+    assert (utils.split_top_level("hello,world,this", ",", []) ==
+        ["hello","world","this"])
+
+def test_split_top_level_span():
+    assert (utils.split_top_level("hello,(something,world),this", ",", []) ==
+        ["hello","(something","world)","this"])
+
+def test_split_top_level_span_one_spec_one_instance():
+    assert (utils.split_top_level("hello,(something,world),this", ",", [("(", ")")]) ==
+        ["hello","(something,world)","this"])
+
+def test_split_top_level_span_one_spec_multiple_instances():
+    assert (utils.split_top_level("hello,(something,world)(I,love),this", ",", [("(", ")")]) ==
+        ["hello","(something,world)(I,love)","this"])
+
+def test_split_top_level_span_one_spec_nested_instances():
+    assert (utils.split_top_level("hello,(something,(or,other),world),this", ",", [("(", ")")]) ==
+        ["hello","(something,(or,other),world)","this"])
+
+def test_split_top_level_span_multiple_spec_one_instance_each():
+    assert (utils.split_top_level("hello,(something,world)<again,for>,this", ",", [("(", ")"), ("<", ">")]) ==
+        ["hello","(something,world)<again,for>","this"])
+
+def test_split_top_level_span_multiple_spec_nested_instances():
+    assert (utils.split_top_level("hello,(something,<again,for>,world),this", ",", [("(", ")"), ("<", ">")]) ==
+        ["hello","(something,<again,for>,world)","this"])
+    assert (utils.split_top_level("hello,<something,(again,for),world>,this", ",", [("(", ")"), ("<", ">")]) ==
+        ["hello","<something,(again,for),world>","this"])
+
+def test_split_top_level_span_multiple_spec_partially_overlapping_instances():
+    assert (utils.split_top_level("hello,(something,<world),again>,this", ",", [("(", ")"), ("<", ">")]) ==
+        ["hello","hello,(something,<world)","again>","this"])
+
+def test_split_top_level_spaces():
+    assert (
+        utils.split_top_level(
+            "hello , ( something ,   , world, w) world ) , this",
+            ",",
+            [("(", ")")]
+        ) ==
+        ["hello "," ( something ,   , world, w) world ) "," this"]
+    )
+
 # Test is_iterable()
 # Source: https://stackoverflow.com/a/44328500
 
