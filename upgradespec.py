@@ -417,12 +417,14 @@ def graph(spec: Optional[Node]) -> gv.Digraph:
     while len(spec_ends) > 0:
         # Decend through the list of ends in reverse order, removing any that
         # have no relation.
-        for spec_end_i in range(len(spec_ends)-1, -1, -1):
-            spec_end = spec_ends[spec_end_i]
+        new_leaves = []
+        new_ends = []
+        for layer_node_i in range(len(spec_ends)-1, -1, -1):
+            spec_end = spec_ends[layer_node_i]
 
             rel = spec_end.get_relation()
             if rel is None:
-                del spec_ends[spec_end_i]
+                del spec_ends[layer_node_i]
                 continue
 
             num = rel.get_num()
@@ -441,22 +443,21 @@ def graph(spec: Optional[Node]) -> gv.Digraph:
             # specs (sub-nodes are already listed in full) consistently.
             if not utils.is_iterable(next_nodes):
                 leaf_branch = [next_nodes] * num
+            else:
+                leaf_branch = next_nodes
 
-            new_leaves = []
-            new_ends = []
-            for leaf in graph_leaves:
-                for node in leaf_branch:
-                    new_leaf = str(next(index))
-                    new_leaves.append(new_leaf)
+            for node in leaf_branch:
+                new_leaf = str(next(index))
 
-                    new_ends.append(node)
+                new_leaves.append(new_leaf)
+                new_ends.append(node)
 
-                    graph.node(new_leaf, label=node.get_name())
-                    graph.edge(leaf, new_leaf, color=color)
+                graph.node(new_leaf, label=node.get_name())
+                graph.edge(graph_leaves[layer_node_i], new_leaf, color=color)
 
-            # Bump up the leaves and ends to the next layer
-            graph_leaves = new_leaves
-            spec_ends = new_ends
+        # Bump up the leaves and ends to the next layer
+        graph_leaves = new_leaves
+        spec_ends = new_ends
 
     return graph
 
