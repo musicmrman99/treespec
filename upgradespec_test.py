@@ -42,13 +42,9 @@ def test_branch_inclusive():
     assert parse("a{2IC}->b") == Builder("a").to(2,"I").node("b").get_root()
 
 def test_branch_divergent():
-    root = (Builder("a")
+    assert parse("a{2XD}->(b,b)") == (Builder("a")
         .to(2).branch(Builder("b"), Builder("b"))
         .get_root())
-    parsed = parse("a{2XD}->(b,b)")
-    print(root.str(True))
-    print(parsed.str(True))
-    assert parsed == root
 
 def test_branch_inclusive_divergent():
     assert parse("a{2ID}->(b,b)") == (Builder("a")
