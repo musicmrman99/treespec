@@ -322,12 +322,12 @@ def _get_next_branch(rest, spec_str):
 
     # Handle divergent substructure (multiple sub-trees)
     subtrees_str = utils.split_top_level(part, ",", [("(", ")")])
-    builders = list(map(lambda subtree_str: _parse_spec(subtree_str), subtrees_str))
+    builders = list(map(lambda subtree_str: _parse(subtree_str), subtrees_str))
 
     # Return needed values
     return (builders, rel_spec, rest)
 
-def _parse_spec(spec_str: str) -> Builder:
+def _parse(spec_str: str) -> Builder:
     """
     Parse the given string of USL into a spec tree, returning the root builder.
     """
@@ -371,10 +371,10 @@ def _parse_spec(spec_str: str) -> Builder:
     # Return the *builder*
     return builder
 
-def parse_spec(spec_str: str) -> Node:
+def parse(spec_str: str) -> Node:
     """Parse the given spec string into a spec tree."""
 
-    builder = _parse_spec(spec_str)
+    builder = _parse(spec_str)
     if builder is None:
         return builder
     else:
