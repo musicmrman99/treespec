@@ -379,6 +379,3 @@ def parse(spec_str: str) -> Node:
         return builder
     else:
         return builder.get_root()
-
-    # Return the root
-    return root
