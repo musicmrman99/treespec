@@ -1,4 +1,4 @@
-from upgradespec import *
+from treespec import *
 import pytest
 
 def test_empty():

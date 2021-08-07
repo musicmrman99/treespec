@@ -1,6 +1,6 @@
 """
-Defines an object model, parser, and graph generator for the Upgrade Spec
-Language (USL).
+Defines an object model, parser, and graph generator for the Tree Spec Language
+(TSL).
 """
 
 import sys
@@ -17,7 +17,7 @@ class Relation:
     """
     Represents a many-to-N relationship between node/branch specs.
 
-    The simplest form of Relation is a one-to-one relation. In USL:
+    The simplest form of Relation is a one-to-one relation. In TSL:
         A->B
     which is equivalent to the code:
     ```
@@ -28,10 +28,10 @@ class Relation:
     r.to_node(nB)
     ```
 
-    **Note**: While whitespace is entirely ignored in USL, it is used in the
+    **Note**: While whitespace is entirely ignored in TSL, it is used in the
     following examples for readability.
 
-    A Relation can also have properties, which are defined in USL by a *relation
+    A Relation can also have properties, which are defined in TSL by a *relation
     spec* between braces before the relation. Within the braces, a relation spec
     has a 3-character format:
         <num><combo><branch>
@@ -192,7 +192,7 @@ class Node:
     depends on how many one-to-many relations have been specified so far) and
     the <num> specified in the relation spec (if a relation spec is given).
 
-    For example, in the USL:
+    For example, in the TSL:
         A {2XC}-> {2XC}B -> C
 
     The node spec:
@@ -345,7 +345,7 @@ def _get_next_branch(rest, spec_str):
 
 def _parse(spec_str: str) -> Optional[Builder]:
     """
-    Parse the given string of USL into a spec tree, returning the root builder.
+    Parse the given string of TSL into a spec tree, returning the root builder.
     """
 
     # Remove ALL spaces
@@ -468,7 +468,7 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print(
             "You must provide a spec argument.",
-            "Syntax: python upgradespec.py <spec_str>",
+            "Syntax: python treespec.py <spec_str>",
             sep="\n"
         )
     spec_str = sys.argv[1]
