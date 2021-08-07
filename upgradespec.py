@@ -4,6 +4,7 @@ Language (USL).
 """
 
 import sys
+from typing import Optional
 import graphviz as gv
 import itertools
 
@@ -125,6 +126,15 @@ class Relation:
 
         self.next = None
 
+    def get_num(self):
+        return self.num
+    
+    def is_inclusive(self):
+        return self.inclusive
+
+    def get_next(self):
+        return self.next
+
     def to_node(self, node):
         self.next = node
 
@@ -201,6 +211,12 @@ class Node:
     def __init__(self, name):
         self.name = name
         self.relation = None
+
+    def get_name(self):
+        return self.name
+
+    def get_relation(self):
+        return self.relation
 
     def relate(self, relation):
         self.relation = relation
@@ -327,7 +343,7 @@ def _get_next_branch(rest, spec_str):
     # Return needed values
     return (builders, rel_spec, rest)
 
-def _parse(spec_str: str) -> Builder:
+def _parse(spec_str: str) -> Optional[Builder]:
     """
     Parse the given string of USL into a spec tree, returning the root builder.
     """
@@ -371,7 +387,7 @@ def _parse(spec_str: str) -> Builder:
     # Return the *builder*
     return builder
 
-def parse(spec_str: str) -> Node:
+def parse(spec_str: str) -> Optional[Node]:
     """Parse the given spec string into a spec tree."""
 
     builder = _parse(spec_str)
@@ -379,3 +395,83 @@ def parse(spec_str: str) -> Node:
         return builder
     else:
         return builder.get_root()
+
+# Generator (Object Model -> Graph)
+# --------------------------------------------------
+
+def graph(spec: Optional[Node]) -> gv.Digraph:
+    graph = gv.Digraph(graph_attr={"rankdir": "BT"})
+
+    if spec is None:
+        return graph
+
+    index = itertools.count() # Unique-valued sequence
+
+    # Root node
+    graph_root = str(next(index))
+    graph.node(graph_root, label=spec.get_name())
+    graph_leaves = [graph_root]
+    spec_ends = [spec]
+
+    # Other nodes
+    while len(spec_ends) > 0:
+        # Decend through the list of ends in reverse order, removing any that
+        # have no relation.
+        for spec_end_i in range(len(spec_ends)-1, -1, -1):
+            spec_end = spec_ends[spec_end_i]
+
+            rel = spec_end.get_relation()
+            if rel is None:
+                del spec_ends[spec_end_i]
+                continue
+
+            num = rel.get_num()
+            inc = rel.is_inclusive()
+            next_nodes = rel.get_next()
+            
+            if num == 1:
+                color = "black"
+            else:
+                if inc:
+                    color = "blue"
+                else:
+                    color = "red"
+
+            # Handle node specs, (must be duplicated by reference) and branch
+            # specs (sub-nodes are already listed in full) consistently.
+            if not utils.is_iterable(next_nodes):
+                leaf_branch = [next_nodes] * num
+
+            new_leaves = []
+            new_ends = []
+            for leaf in graph_leaves:
+                for node in leaf_branch:
+                    new_leaf = str(next(index))
+                    new_leaves.append(new_leaf)
+
+                    new_ends.append(node)
+
+                    graph.node(new_leaf, label=node.get_name())
+                    graph.edge(leaf, new_leaf, color=color)
+
+            # Bump up the leaves and ends to the next layer
+            graph_leaves = new_leaves
+            spec_ends = new_ends
+
+    return graph
+
+# Direct Usage
+# --------------------------------------------------
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print(
+            "You must provide a spec argument.",
+            "Syntax: python upgradespec.py <spec_str>",
+            sep="\n"
+        )
+    spec_str = sys.argv[1]
+
+    spec = parse(spec_str)
+    g = graph(spec)
+    g.render("graph", format="png", cleanup=True)
