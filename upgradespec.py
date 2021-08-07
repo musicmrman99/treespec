@@ -1,10 +1,119 @@
+"""
+Defines an object model, parser, and graph generator for the Upgrade Spec
+Language (USL).
+"""
+
 import sys
 import graphviz as gv
 import itertools
 
 import utils
 
+# Object Model
+# --------------------------------------------------
+
 class Relation:
+    """
+    Represents a many-to-N relationship between node/branch specs.
+
+    The simplest form of Relation is a one-to-one relation. In USL:
+        A->B
+    which is equivalent to the code:
+    ```
+    nA = Node("A")
+    nB = Node("B")
+    r = Relation()
+    nA.relate(r) # Note that nA stores r, not vice-versa
+    r.to_node(nB)
+    ```
+
+    **Note**: While whitespace is entirely ignored in USL, it is used in the
+    following examples for readability.
+
+    A Relation can also have properties, which are defined in USL by a *relation
+    spec* between braces before the relation. Within the braces, a relation spec
+    has a 3-character format:
+        <num><combo><branch>
+
+    with the following meanings:
+
+    - num: The number of nodes (1-9) that the related-to spec (node or
+      branch) represents.
+
+    - combo: Either `X` or `I`:
+      - `X` means the nodes of the following node/branch spec are exclusive
+        (only one path can be navigated along).
+      - `I` means the nodes of the following node/branch spec are inclusive
+        (any combination of branches can be followed simultaneously).
+
+    - branch: Either `C` or `D`:
+      - `C` means the following spec is a *node spec*, ie. represents one or
+        more (as per <num>) nodes with consistent (the same) substructure.
+      - `D` means the following spec is a *branch spec*, ie. represents one
+        or more (as per <num>) node with divergent (different)
+        substructures. A branch spec is a list of <num> sub-trees (containing
+        node specs, relations, relation specs, and/or branch specs), surrounded
+        by brackets, eg. `... {2XD}-> (A, B)`.
+
+    **Note**: If a relation spec isn't given, then `{1XC}` is assumed.
+
+    Basic examples of relation specs:
+    - `A {2XC}-> B` - produces a tree with one "A" node that links (by graph
+      edges) to two "B" nodes, though only one of those edges can be followed.
+    - `A {2IC}-> B` - produces a tree with one "A" node that links to two "B"
+      nodes, any combination of which (neither, one, the other, or both) can be
+      followed.
+    - `A {2XD}-> (B, C)` - produces a tree with one "A" node that links to a
+      "B" node and a "C" node, only one of which ("B" or "C") can be followed.
+    - `A {2ID}-> (B, C)` - produces a tree with one "A" node that links to a
+      "B" node and a "C" node, any combination of which can be followed.
+    
+    More complex example:
+        A -> B -> {2IC}-> C -> D {2XD}-> (E {3IC}-> F {2XC}-> G, E -> GXX)
+    
+    Which produces the tree:
+    A
+    \\- B
+       |- C
+       |  \\- D {VVV Exclusive}
+       |     |- E
+       |     |  |- F {VVV Exclusive}
+       |     |  |  |- G
+       |     |  |  \\- G
+       |     |  |- F {VVV Exclusive}
+       |     |  |  |- G
+       |     |  |  \\- G
+       |     |  \\- F {VVV Exclusive}
+       |     |     |- G
+       |     |     \\- G
+       |     \\- E
+       |        \\- GXX
+       \\- C
+          \\- D {VVV Exclusive}
+             |- E
+             |  |- F {VVV Exclusive}
+             |  |  |- G
+             |  |  \\- G
+             |  |- F {VVV Exclusive}
+             |  |  |- G
+             |  |  \\- G
+             |  \\- F {VVV Exclusive}
+             |     |- G
+             |     \\- G
+             \\- E
+                \\- GXX
+
+    Notably, it is also possible to continue after a branch spec, like so:
+        A {2XD}-> (B, C) -> D
+
+    Which produces the tree:
+    A
+    |- B
+    |  \\- D
+    \\- C
+       \\- D
+    """
+
     def __init__(self, num=1, combo="X"):
         self.num = int(num)
         if combo == "I":
@@ -65,6 +174,30 @@ class Relation:
         return rel_spec_str+"->"+next_str
 
 class Node:
+    """
+    A node spec.
+    
+    A node spec represents one or more nodes in a tree. The exact number of
+    nodes it represents is relative to the current number of heads (which
+    depends on how many one-to-many relations have been specified so far) and
+    the <num> specified in the relation spec (if a relation spec is given).
+
+    For example, in the USL:
+        A {2XC}-> {2XC}B -> C
+
+    The node spec:
+    - `A` represents one node (the root node).
+    - `B` represents two nodes ("two per A", as per the relation spec).
+    - `C` represents four nodes ("two per B", where there are two Bs)
+
+    Assuming no divergent relations, the number of nodes a node spec represents
+    is the product of the <num>s of all relation specs before it. With divergent
+    relations, only the sub-trees in which the node spec is given are included
+    in the calculation.
+
+    See Relation's docs for more information.
+    """
+
     def __init__(self, name):
         self.name = name
         self.relation = None
@@ -95,6 +228,16 @@ class Node:
         return name + rel_str
 
 class Builder:
+    """
+    Provides a fluent interface for building complex tree specs.
+
+    The interface is intended to make writing tree specs in Python look more
+    like nested objects, in the same way as you would nest lists, tuples, dicts,
+    etc.
+    
+    See the test suite for examples.
+    """
+
     def __init__(self, name):
         self.root = Node(name)
         self.cur = self.root
@@ -129,7 +272,16 @@ class Builder:
             ends = [self.cur]
         return ends
 
+# Parser (Str -> Object Model)
+# --------------------------------------------------
+
 def _get_next_node(rest, spec_str):
+    """
+    Parse the next part as a node spec.
+
+    A node spec is any name that doesn't include `{`, `}`, or `->`.
+    """
+
     # Split off this part
     (part, rest) = utils.pad_list(rest.split("->", 1), 2, None)
 
@@ -148,6 +300,13 @@ def _get_next_node(rest, spec_str):
     return (name, rel_spec, rest)
 
 def _get_next_branch(rest, spec_str):
+    """
+    Parse the next part as a branch spec.
+
+    A branch spec is a comma-separated list of subtrees, surrounded by brackets,
+    like `(A -> B, X, Y -> Z)`.
+    """
+
     # Split off this part (ie. list of sub-trees)
     # Note: Match brackets, as divergent branches are nestable
     part = utils.get_between(rest, "(", ")", True)
