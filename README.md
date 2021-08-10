@@ -23,4 +23,7 @@ For additional details about the kinds of relations you can specify (and what
 
 If you need to build a parallel-branching tree programmatically, you can pass in
 TSL code to `treespec.parse()`, or use the `treespec.Builder` class (see its
-docs for more info).
+docs for more info) and call `builder.get_root()` on the final builder object.
+
+To make a `graphviz.Digraph` from the TSL AST, pass the root `Node` object (from
+`treespec.parse()` or `builder.get_root()`) into `treespec.generate()`.
