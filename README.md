@@ -14,7 +14,7 @@ the first parameter, like so:
 
     python treespec.py 'A {3IC}-> B -> C {2IC}-> D -> E'
 
-Produces the following image:
+Produces the following image (called `graph.png` in your current directory):
 
 ![Basic parallel branchin tree](img/basic-parallel-branching-tree.png)
 
