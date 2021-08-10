@@ -18,8 +18,8 @@ Produces the following image (called `graph.png` in your current directory):
 
 ![Basic parallel branchin tree](img/basic-parallel-branching-tree.png)
 
-Additional details about the kinds of relations you can specify (and what `I`
-and `C` mean in the above example), see the `Relation` class docs.
+For additional details about the kinds of relations you can specify (and what
+`I` and `C` mean in the above example), see the `Relation` class docs.
 
 If you need to build a parallel-branching tree programmatically, you can pass in
 TSL code to `treespec.parse()`, or use the `treespec.Builder` class (see its
