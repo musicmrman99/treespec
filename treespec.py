@@ -348,8 +348,12 @@ def _parse(spec_str: str) -> Optional[Builder]:
     Parse the given string of TSL into a spec tree, returning the root builder.
     """
 
-    # Remove ALL spaces
-    rest = spec_str.replace(" ", "")
+    # Remove ALL whitespace
+    rest = (spec_str
+        .replace(" ", "")
+        .replace("\t", "")
+        .replace("\n", "")
+    )
 
     # Nothing to parse
     if rest == "":
