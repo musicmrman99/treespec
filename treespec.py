@@ -414,8 +414,8 @@ def parse(spec_str: str) -> Optional[Node]:
 # Generator (Object Model -> Graph)
 # --------------------------------------------------
 
-def graph(spec: Optional[Node]) -> gv.Digraph:
-    graph = gv.Digraph(graph_attr={"rankdir": "BT"})
+def graph(spec: Optional[Node], engine: str = "dot") -> gv.Digraph:
+    graph = gv.Digraph(graph_attr={"rankdir": "BT"}, engine=engine)
 
     if spec is None:
         return graph
@@ -488,6 +488,11 @@ if __name__ == "__main__":
         )
     spec_str = sys.argv[1]
 
+    if len(sys.argv) >= 3:
+        engine = sys.argv[2]
+    else:
+        engine = "dot"
+
     spec = parse(spec_str)
-    g = graph(spec)
+    g = graph(spec, engine)
     g.render("graph", format="png", cleanup=True)
