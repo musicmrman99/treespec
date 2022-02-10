@@ -348,19 +348,12 @@ def _parse(spec_str: str) -> Optional[Builder]:
     Parse the given string of TSL into a spec tree, returning the root builder.
     """
 
-    # Remove ALL whitespace
-    rest = (spec_str
-        .replace(" ", "")
-        .replace("\t", "")
-        .replace("\n", "")
-    )
-
     # Nothing to parse
-    if rest == "":
+    if spec_str == "":
         return None
 
     # Split off first node and make the root builder
-    (root_name, rel_spec, rest) = _get_next_node(rest, spec_str)
+    (root_name, rel_spec, rest) = _get_next_node(spec_str, spec_str)
     builder = Builder(root_name)
 
     # Make the rest of the nodes
@@ -393,6 +386,24 @@ def _parse(spec_str: str) -> Optional[Builder]:
 
 def parse(spec_str: str) -> Optional[Node]:
     """Parse the given spec string into a spec tree."""
+
+    # Remove ALL unescaped whitespace
+    spec_str = (spec_str
+        # Replace escaped characters with their escape sequences
+        .replace("\\ ", "\\s")
+        .replace("\\t", "\\t")
+        .replace("\\n", "\\n")
+
+        # Remove unescaped whitespace
+        .replace(" ", "")
+        .replace("\t", "")
+        .replace("\n", "")
+
+        # Replace escape sequences with their characters
+        .replace("\\s", " ")
+        .replace("\\t", "\t")
+        .replace("\\n", "\n")
+    )
 
     builder = _parse(spec_str)
     if builder is None:
